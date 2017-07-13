@@ -32,7 +32,6 @@ class VIVEnode
     tf::TransformListener tf_listener_;
     ros::ServiceServer set_origin_server_;
     ros::Publisher twist1_pub_;
-    ros::Publisher twist2_pub_;
 
     VRInterface vr_;
 
@@ -54,8 +53,7 @@ VIVEnode::VIVEnode(int rate)
 
   set_origin_server_ = nh_.advertiseService("/vive/set_origin", &VIVEnode::setOriginCB, this);
 
-  //~ twist1_pub_ = nh_.advertise<geometry_msgs::TwistStamped>("/vive/twist1", 10);
-  //~ twist2_pub_ = nh_.advertise<geometry_msgs::TwistStamped>("/vive/twist2", 10);
+  twist1_pub_ = nh_.advertise<geometry_msgs::TwistStamped>("/vive/twist1", 10);
 
   return;
 }
@@ -159,25 +157,25 @@ void VIVEnode::Run()
       // It's a HMD
       if (dev_type == 1)
       {
-	ROS_INFO("Found HMD");
+	// ROS_INFO("Found HMD");
         tf_broadcaster_.sendTransform(tf::StampedTransform(tf, ros::Time::now(), "world_vive", "hmd"));
       }
       // It's a controller
       if (dev_type == 2)
       {
-	ROS_INFO("Found Controller");
+	// ROS_INFO("Found Controller");
         tf_broadcaster_.sendTransform(tf::StampedTransform(tf, ros::Time::now(), "world_vive", "controller"+std::to_string(controller_count++)));
       }
       // It's a vive tracker
       if (dev_type == 3)
       {
-      	ROS_INFO("Found Vive Tracker");
+      	// ROS_INFO("Found Vive Tracker");
         tf_broadcaster_.sendTransform(tf::StampedTransform(tf, ros::Time::now(), "world_vive", "vivetracker"+std::to_string(vivetracker_count++)));
       }
       // It's a lighthouse
       if (dev_type == 4)
       {
-	ROS_INFO("Found Lighthouse");
+	// ROS_INFO("Found Lighthouse");
         tf_broadcaster_.sendTransform(tf::StampedTransform(tf, ros::Time::now(), "world_vive", "lighthouse"+std::to_string(lighthouse_count++)));
       }
 
@@ -193,41 +191,24 @@ void VIVEnode::Run()
     tf_broadcaster_.sendTransform(tf::StampedTransform(tf_world, ros::Time::now(), "world", "world_vive"));
 
     // Publish twist messages for controller1 and controller2
-    //~ double lin_vel[3], ang_vel[3];
-    //~ if (vr_.GetDeviceVel(1, lin_vel, ang_vel))
-    //~ {
-      //~ geometry_msgs::Twist twist_msg;
-      //~ twist_msg.linear.x = lin_vel[0];
-      //~ twist_msg.linear.y = lin_vel[1];
-      //~ twist_msg.linear.z = lin_vel[2];
-      //~ twist_msg.angular.x = ang_vel[0];
-      //~ twist_msg.angular.y = ang_vel[1];
-      //~ twist_msg.angular.z = ang_vel[2];
+    double lin_vel[3], ang_vel[3];
+    if (vr_.GetDeviceVel(1, lin_vel, ang_vel))
+    {
+      geometry_msgs::Twist twist_msg;
+      twist_msg.linear.x = lin_vel[0];
+      twist_msg.linear.y = lin_vel[1];
+      twist_msg.linear.z = lin_vel[2];
+      twist_msg.angular.x = ang_vel[0];
+      twist_msg.angular.y = ang_vel[1];
+      twist_msg.angular.z = ang_vel[2];
 
-      //~ geometry_msgs::TwistStamped twist_msg_stamped;
-      //~ twist_msg_stamped.header.stamp = ros::Time::now();
-      //~ twist_msg_stamped.header.frame_id = "world_vive";
-      //~ twist_msg_stamped.twist = twist_msg;
+      geometry_msgs::TwistStamped twist_msg_stamped;
+      twist_msg_stamped.header.stamp = ros::Time::now();
+      twist_msg_stamped.header.frame_id = "world_vive";
+      twist_msg_stamped.twist = twist_msg;
 
-      //~ twist1_pub_.publish(twist_msg_stamped);
-    //~ }
-    //~ if (vr_.GetDeviceVel(2, lin_vel, ang_vel))
-    //~ {
-      //~ geometry_msgs::Twist twist_msg;
-      //~ twist_msg.linear.x = lin_vel[0];
-      //~ twist_msg.linear.y = lin_vel[1];
-      //~ twist_msg.linear.z = lin_vel[2];
-      //~ twist_msg.angular.x = ang_vel[0];
-      //~ twist_msg.angular.y = ang_vel[1];
-      //~ twist_msg.angular.z = ang_vel[2];
-
-      //~ geometry_msgs::TwistStamped twist_msg_stamped;
-      //~ twist_msg_stamped.header.stamp = ros::Time::now();
-      //~ twist_msg_stamped.header.frame_id = "world_vive";
-      //~ twist_msg_stamped.twist = twist_msg;
-
-      //~ twist2_pub_.publish(twist_msg_stamped);
-    //~ }
+      twist1_pub_.publish(twist_msg_stamped);
+    }
 
     ros::spinOnce();
     loop_rate_.sleep();
