@@ -6,6 +6,7 @@
 #include "vive_ros/vr_interface.h"
 
 #include <geometry_msgs/TwistStamped.h>
+#include <geometry_msgs/PoseStamped.h>
 
 void handleDebugMessages(const std::string &msg) {ROS_DEBUG(" [VIVE] %s",msg.c_str());}
 void handleInfoMessages(const std::string &msg) {ROS_INFO(" [VIVE] %s",msg.c_str());}
@@ -32,6 +33,7 @@ class VIVEnode
     tf::TransformListener tf_listener_;
     ros::ServiceServer set_origin_server_;
     ros::Publisher twist1_pub_;
+    ros::Publisher pose1_pub_;
 
     VRInterface vr_;
 
@@ -54,6 +56,7 @@ VIVEnode::VIVEnode(int rate)
   set_origin_server_ = nh_.advertiseService("/vive/set_origin", &VIVEnode::setOriginCB, this);
 
   twist1_pub_ = nh_.advertise<geometry_msgs::TwistStamped>("/vive/twist1", 10);
+  pose1_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("/vive/pose1", 10);
 
   return;
 }
@@ -169,8 +172,49 @@ void VIVEnode::Run()
       // It's a vive tracker
       if (dev_type == 3)
       {
-      	// ROS_INFO("Found Vive Tracker");
+      	ROS_INFO("Found Vive Tracker");
         tf_broadcaster_.sendTransform(tf::StampedTransform(tf, ros::Time::now(), "world_vive", "vivetracker"+std::to_string(vivetracker_count++)));
+
+	// Publish twist and pose messages for vive tracker
+	double lin_vel[3], ang_vel[3];
+	if (vr_.GetDeviceVel(i, lin_vel, ang_vel))
+	  {
+	    geometry_msgs::Twist twist_msg;
+	    twist_msg.linear.x = lin_vel[0];
+	    twist_msg.linear.y = lin_vel[1];
+	    twist_msg.linear.z = lin_vel[2];
+	    twist_msg.angular.x = ang_vel[0];
+	    twist_msg.angular.y = ang_vel[1];
+	    twist_msg.angular.z = ang_vel[2];
+
+	    geometry_msgs::TwistStamped twist_msg_stamped;
+	    twist_msg_stamped.header.stamp = ros::Time::now();
+	    twist_msg_stamped.header.frame_id = "world_vive";
+	    twist_msg_stamped.twist = twist_msg;
+
+	    twist1_pub_.publish(twist_msg_stamped);
+	  }
+
+	double pMatrix[3][4];
+	if (vr_.GetDeviceMatrix(i, pMatrix))
+	  {
+	    geometry_msgs::Pose pose_msg;
+	    pose_msg.position.x = pMatrix[0][3];
+	    pose_msg.position.y = pMatrix[1][3];
+	    pose_msg.position.z = pMatrix[2][3];
+	    // twist_msg.angular.x = ang_vel[0];
+	    // twist_msg.angular.y = ang_vel[1];
+	    // twist_msg.angular.z = ang_vel[2];
+
+	    geometry_msgs::PoseStamped pose_msg_stamped;
+	    pose_msg_stamped.header.stamp = ros::Time::now();
+	    pose_msg_stamped.header.frame_id = "world_vive";
+	    pose_msg_stamped.pose = pose_msg;
+
+	    pose1_pub_.publish(pose_msg_stamped);
+	  }
+
+
       }
       // It's a lighthouse
       if (dev_type == 4)
@@ -189,26 +233,6 @@ void VIVEnode::Run()
     tf_world.setRotation(quat_world);
 
     tf_broadcaster_.sendTransform(tf::StampedTransform(tf_world, ros::Time::now(), "world", "world_vive"));
-
-    // Publish twist messages for controller1 and controller2
-    double lin_vel[3], ang_vel[3];
-    if (vr_.GetDeviceVel(1, lin_vel, ang_vel))
-    {
-      geometry_msgs::Twist twist_msg;
-      twist_msg.linear.x = lin_vel[0];
-      twist_msg.linear.y = lin_vel[1];
-      twist_msg.linear.z = lin_vel[2];
-      twist_msg.angular.x = ang_vel[0];
-      twist_msg.angular.y = ang_vel[1];
-      twist_msg.angular.z = ang_vel[2];
-
-      geometry_msgs::TwistStamped twist_msg_stamped;
-      twist_msg_stamped.header.stamp = ros::Time::now();
-      twist_msg_stamped.header.frame_id = "world_vive";
-      twist_msg_stamped.twist = twist_msg;
-
-      twist1_pub_.publish(twist_msg_stamped);
-    }
 
     ros::spinOnce();
     loop_rate_.sleep();

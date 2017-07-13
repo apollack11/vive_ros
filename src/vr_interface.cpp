@@ -92,13 +92,14 @@ void VRInterface::Update()
   {
     pHMD_->GetDeviceToAbsoluteTrackingPose(vr::TrackingUniverseRawAndUncalibrated, 0, device_poses_, max_devices_);
                                     
-    //~ for (vr::TrackedDeviceIndex_t device_index = vr::k_unTrackedDeviceIndex_Hmd; device_index < max_devices_; ++device_index)
-    //~ {
-      //~ if (device_poses_[device_index].bDeviceIsConnected && device_poses_[device_index].bPoseIsValid)
-      //~ {
-        //~ info_("device[" + std::to_string(device_index) + "]: " + std::to_string(pHMD_->GetTrackedDeviceClass(device_index)) + " " + std::to_string(device_poses_[device_index].eTrackingResult));
-      //~ }
-    //~ }
+    for (vr::TrackedDeviceIndex_t device_index = vr::k_unTrackedDeviceIndex_Hmd; device_index < max_devices_; ++device_index)
+    {
+      if (device_poses_[device_index].bDeviceIsConnected && device_poses_[device_index].bPoseIsValid)
+      {
+        // info_("device[" + std::to_string(device_index) + "]: " + std::to_string(pHMD_->GetTrackedDeviceClass(device_index)) + " " + std::to_string(device_poses_[device_index].eTrackingResult));
+        // info_("device[" + std::to_string(device_index) + "]: " + std::to_string(pHMD_->GetTrackedDeviceClass(device_index)) + " " + std::to_string(device_poses_[device_index].mDeviceToAbsoluteTracking.m[0][3]));
+      }
+    }
   }
 }
 
@@ -124,7 +125,6 @@ int VRInterface::GetDeviceMatrix(int index, double pMatrix[3][4])
         for (int o=0; o<4; o++)
           pMatrix[i][o] = static_cast<double>(device_poses_[index].mDeviceToAbsoluteTracking.m[i][o]);
 
-      
       return pHMD_->GetTrackedDeviceClass(index);
     }
   }
