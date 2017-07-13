@@ -137,6 +137,7 @@ void VIVEnode::Run()
 
     int controller_count = 1;
     int lighthouse_count = 1;
+    int vivetracker_count = 1;
     for (int i=0; i<5; i++)
     {
       int dev_type = vr_.GetDeviceMatrix(i, tf_matrix);
@@ -158,16 +159,25 @@ void VIVEnode::Run()
       // It's a HMD
       if (dev_type == 1)
       {
+	ROS_INFO("Found HMD");
         tf_broadcaster_.sendTransform(tf::StampedTransform(tf, ros::Time::now(), "world_vive", "hmd"));
       }
       // It's a controller
       if (dev_type == 2)
       {
+	ROS_INFO("Found Controller");
         tf_broadcaster_.sendTransform(tf::StampedTransform(tf, ros::Time::now(), "world_vive", "controller"+std::to_string(controller_count++)));
+      }
+      // It's a vive tracker
+      if (dev_type == 3)
+      {
+      	ROS_INFO("Found Vive Tracker");
+        tf_broadcaster_.sendTransform(tf::StampedTransform(tf, ros::Time::now(), "world_vive", "vivetracker"+std::to_string(vivetracker_count++)));
       }
       // It's a lighthouse
       if (dev_type == 4)
       {
+	ROS_INFO("Found Lighthouse");
         tf_broadcaster_.sendTransform(tf::StampedTransform(tf, ros::Time::now(), "world_vive", "lighthouse"+std::to_string(lighthouse_count++)));
       }
 
