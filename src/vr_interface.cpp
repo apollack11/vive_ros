@@ -23,7 +23,7 @@ std::map<vr::ChaperoneCalibrationState, std::string> mapChaperonStrings
   { vr::ChaperoneCalibrationState_Warning_BaseStationRemoved, "There are less base stations than when calibrated" },
   { vr::ChaperoneCalibrationState_Warning_SeatedBoundsInvalid, "Seated bounds haven't been calibrated for the current tracking center" },
   { vr::ChaperoneCalibrationState_Error, "The UniverseID is invalid" },
-  { vr::ChaperoneCalibrationState_Error_BaseStationUninitalized, "Tracking center hasn't be calibrated for at least one of the base stations" },
+  { vr::ChaperoneCalibrationState_Error_BaseStationUninitialized, "Tracking center hasn't be calibrated for at least one of the base stations" },
   { vr::ChaperoneCalibrationState_Error_BaseStationConflict, "Tracking center is calibrated, but base stations disagree on the tracking space" },
   { vr::ChaperoneCalibrationState_Error_PlayAreaInvalid, "Play Area hasn't been calibrated for the current tracking center" },
   { vr::ChaperoneCalibrationState_Error_CollisionBoundsInvalid, "Collision Bounds haven't been calibrated for the current tracking center" }
@@ -54,7 +54,8 @@ bool VRInterface::Init()
   // Loading the SteamVR Runtime
   vr::EVRInitError eError = vr::VRInitError_None;
   
-  pHMD_ = vr::VR_Init( &eError, vr::VRApplication_Scene );
+  // pHMD_ = vr::VR_Init( &eError, vr::VRApplication_Scene );
+  pHMD_ = vr::VR_Init( &eError, vr::VRApplication_Background );
 
   if (eError != vr::VRInitError_None)
   {
